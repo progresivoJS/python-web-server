@@ -15,6 +15,7 @@ class webserverHandler(BaseHTTPRequestHandler):
                     output += "<html><body>Hello!"
                 elif self.path.endswith("/hola"):
                     output += "<html><body>&#161Hola <a href = '/hello'>Back to Hello</a>"
+                # enctype = encdoing type
                 output += "<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name='message' type='text' ><input type='submit' value='Submit'></form>"
 
                 output += "</body></html>"
@@ -30,8 +31,6 @@ class webserverHandler(BaseHTTPRequestHandler):
             self.send_response(301) # success code of post request
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            
-            print("HI1")
 
             ctype, pdict = cgi.parse_header(self.headers['content-type'])
             pdict['boundary'] = bytes(pdict['boundary'], "utf-8")

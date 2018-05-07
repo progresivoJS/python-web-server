@@ -13,7 +13,10 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 
                 output = "<html><body>"
-                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/new'><h2>What is the name of new restaurant?</h2><input name='message' type='text'><input type='submit' value='Submit'></form>"
+                output += "<h2>What is the name of new restaurant?</h2>"
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/new'>"
+                output += "<input name='newRestaurantName' type='text'>"
+                output += "<input type='submit' value='Submit'></form>"
                 output += "</body></html>"
 
                 self.wfile.write(output.encode())
@@ -42,26 +45,22 @@ class webserverHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            self.send_response(301) # success code of post request
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
+            if self.path.endswith("/restaurants/new"):
+                ctype, pdict = cgi.parse_header(self.headers['content-type'])
+                pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
 
-            ctype, pdict = cgi.parse_header(self.headers['content-type'])
-            pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+                if ctype == 'multipart/form-data':
+                    fields = cgi.parse_multipart(self.rfile, pdict)
+                    new_restaurant_name = fields.get('newRestaurantName')
 
-            if ctype == 'multipart/form-data':
-                fields = cgi.parse_multipart(self.rfile, pdict)
-                messagecontent = fields.get('message')
+                restaurant_dao.add_new_restaurant(new_restaurant_name[0].decode())
+                
+                self.send_response(301)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
 
-            output = ""
-            output += "<html><body>"
-            output += " <h2> Okay, how about this: </h2>"
-            output += "<h1> {} </h1>".format(messagecontent[0].decode())
-
-            output += "<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name='message' type='text' ><input type= 'submit' value='Submit'></form>"
-            output += "</body></html>"
-            self.wfile.write(output.encode())
-            return
+                return
 
         except:
             pass
