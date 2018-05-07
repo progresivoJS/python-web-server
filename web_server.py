@@ -1,26 +1,66 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import cgi # common gateway interface
 
 # Handler
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             if self.path.endswith("/hello") or self.path.endswith("/hola"):
-                self.send_response(200)
+                self.send_response(200) # success code of get request
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-
+                
+                output = ""
                 if self.path.endswith("/hello"):
-                    output = ""
-                    output += "<html><body>Hello!</body></html>"
+                    output += "<html><body>Hello!"
                 elif self.path.endswith("/hola"):
-                    output = ""
-                    output += "<html><body>&#161Hola <a href = '/hello'>Back to Hello</a></body></html>"
+                    output += "<html><body>&#161Hola <a href = '/hello'>Back to Hello</a>"
+                output += "<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name='message' type='text' ><input type='submit' value='Submit'></form>"
+
+                output += "</body></html>"
+
                 self.wfile.write(output.encode()) # In python 3, parameter of the write have to be byte-like.
-                print(output)
                 return
         
         except IOError:
             self.send_error(404, "File Not Found {}".format(self.path))
+
+    def do_POST(self):
+        try:
+            self.send_response(301) # success code of post request
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            
+            print("HI1")
+
+            ctype, pdict = cgi.parse_header(self.headers['content-type'])
+
+            print("HI2")
+
+            pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+
+            print("HI3")
+
+            if ctype == 'multipart/form-data':
+                fields = cgi.parse_multipart(self.rfile, pdict)
+                messagecontent = fields.get('message')
+
+            print("HI4")
+
+            output = ""
+            output += "<html><body>"
+            output += " <h2> Okay, how about this: </h2>"
+            output += "<h1> {} </h1>".format(messagecontent[0].decode())
+
+            output += "<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name='message' type='text' ><input type= 'submit' value='Submit'></form>"
+            output += "</body></html>"
+            print(output)
+            self.wfile.write(output.encode())
+            print(output)
+            return
+
+        except:
+            pass
 
 # main
 def main():
