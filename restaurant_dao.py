@@ -11,7 +11,12 @@ def read_all_restaurants():
     items = session.query(Restaurant).all()
     return items
 
-def edit_restaurant(restaurant, new_name):
+def read_restaurant_by_id(target_id):
+    restaurant = session.query(Restaurant).filter_by(id = target_id).one()
+    return restaurant
+
+def edit_restaurant(id, new_name):
+    restaurant = read_restaurant_by_id(id)
     restaurant.name = new_name
     session.add(restaurant)
     session.commit()

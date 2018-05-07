@@ -7,7 +7,31 @@ import restaurant_dao
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
-            if self.path.endswith("/restaurants/new"):
+            if self.path.endswith("/delete"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                
+            elif self.path.endswith("/edit"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                id = self.path.split('/')[2]
+                restaurant = restaurant_dao.read_restaurant_by_id(id)
+                output = "<html><body>"
+                output += "<h2>{}</h2>".format(restaurant.name)
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/{}/edit'>".format(id)
+                output += "<input name='newRestaurantName' type='text' placeholder='{}'>".format(restaurant.name)
+                output += "<input type='submit' value='Rename'></form>"
+                output += "</body></html>"
+
+                self.wfile.write(output.encode())
+
+                return
+
+            elif self.path.endswith("/restaurants/new"):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
@@ -32,8 +56,8 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output = "<html><body>"
                 for restaurant in restaurants:
                     output += "<h2>{}</h2>".format(restaurant.name)
-                    output += "<h3><a href=''>Edit</a></h3>"
-                    output += "<h3><a href=''>Delete</a></h3>"
+                    output += "<h3><a href='/restaurants/{}/edit'>Edit</a></h3>".format(restaurant.id)
+                    output += "<h3><a href='/restaurants/{}/delete'>Delete</a></h3>".format(restaurant.id)
                 output += "<h2><a href='/restaurants/new'>Add new restaurant</a></h2>"
                 output += "</body></html>"
 
@@ -45,7 +69,25 @@ class webserverHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            if self.path.endswith("/restaurants/new"):
+            if self.path.endswith("/edit"):
+                ctype, pdict = cgi.parse_header(self.headers['content-type'])
+                pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
+
+                if ctype == 'multipart/form-data':
+                    fileds = cgi.parse_multipart(self.rfile, pdict)
+                    new_restaurant_name = fileds.get('newRestaurantName')
+
+                id = self.path.split('/')[2]
+                restaurant_dao.edit_restaurant(id, new_restaurant_name[0].decode())
+
+                self.send_response(301)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+
+                return
+
+            elif self.path.endswith("/restaurants/new"):
                 ctype, pdict = cgi.parse_header(self.headers['content-type'])
                 pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
 
