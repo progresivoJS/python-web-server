@@ -1,22 +1,37 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import cgi # common gateway interface
 
+import restaurant_dao
+
 # Handler
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
-            if self.path.endswith("/hello") or self.path.endswith("/hola"):
-                self.send_response(200) # success code of get request
+            if self.path.endswith("/restaurants/new"):
+                self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
                 
-                output = ""
-                if self.path.endswith("/hello"):
-                    output += "<html><body>Hello!"
-                elif self.path.endswith("/hola"):
-                    output += "<html><body>&#161Hola <a href = '/hello'>Back to Hello</a>"
-                output += "<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name='message' type='text' ><input type='submit' value='Submit'></form>"
+                output = "<html><body>"
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/new'><h2>What is the name of new restaurant?</h2><input name='message' type='text'><input type='submit' value='Submit'></form>"
+                output += "</body></html>"
 
+                self.wfile.write(output.encode())
+                return
+
+            elif self.path.endswith("/restaurants"):
+                self.send_response(200) # success code of get request
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+
+                restaurants = restaurant_dao.read_all_restaurants()
+
+                output = "<html><body>"
+                for restaurant in restaurants:
+                    output += "<h2>{}</h2>".format(restaurant.name)
+                    output += "<h3><a href=''>Edit</a></h3>"
+                    output += "<h3><a href=''>Delete</a></h3>"
+                output += "<h2><a href='/restaurants/new'>Add new restaurant</a></h2>"
                 output += "</body></html>"
 
                 self.wfile.write(output.encode()) # In python 3, parameter of the write have to be byte-like.
@@ -30,8 +45,6 @@ class webserverHandler(BaseHTTPRequestHandler):
             self.send_response(301) # success code of post request
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            
-            print("HI1")
 
             ctype, pdict = cgi.parse_header(self.headers['content-type'])
             pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
