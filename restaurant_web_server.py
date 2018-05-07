@@ -12,6 +12,16 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
 
+                id = self.path.split('/')[2]
+                restaurant = restaurant_dao.read_restaurant_by_id(id)
+                output = "<html><body>"
+                output += "<h2>Are you sure you want to delete {}?".format(restaurant.name)
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/{}/delete'>".format(id)
+                output += "<input type='submit' value='Delete'></form>"
+                output += "</body></html>"
+
+                self.wfile.write(output.encode())
+                return
                 
             elif self.path.endswith("/edit"):
                 self.send_response(200)
@@ -28,7 +38,6 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output += "</body></html>"
 
                 self.wfile.write(output.encode())
-
                 return
 
             elif self.path.endswith("/restaurants/new"):
@@ -69,7 +78,17 @@ class webserverHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            if self.path.endswith("/edit"):
+            if self.path.endswith("/delete"):
+                id = self.path.split('/')[2]
+                restaurant_dao.delete_restaurant(id)
+                
+                self.send_response(301)
+                self.send_header('Content-type', 'text/html')
+                self.send_header('Location', '/restaurants')
+                self.end_headers()
+                return
+
+            elif self.path.endswith("/edit"):
                 ctype, pdict = cgi.parse_header(self.headers['content-type'])
                 pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
 
@@ -84,7 +103,6 @@ class webserverHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-type', 'text/html')
                 self.send_header('Location', '/restaurants')
                 self.end_headers()
-
                 return
 
             elif self.path.endswith("/restaurants/new"):

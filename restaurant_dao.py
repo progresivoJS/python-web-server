@@ -22,7 +22,8 @@ def edit_restaurant(id, new_name):
     session.commit()
     return
 
-def delete_restaurant(restaurant):
+def delete_restaurant(id):
+    restaurant = read_restaurant_by_id(id)
     session.delete(restaurant)
     session.commit()
     return
